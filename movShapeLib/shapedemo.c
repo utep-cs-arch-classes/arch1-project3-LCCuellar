@@ -33,7 +33,6 @@ main()
 
   clearScreen(COLOR_BLUE);
   drawString5x7(20,20, "TEST", COLOR_RED, COLOR_BLUE);
-  //  drawString5x7(20,30, "slide in here...", COLOR_RED, COLOR_BLUE);
   shapeInit();
   
   abDrawPos((AbShape*)&rect10, &rectPos, COLOR_ORANGE, COLOR_BLUE);

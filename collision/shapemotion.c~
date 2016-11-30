@@ -13,9 +13,9 @@
 #include <p2switches.h>
 #include <shape.h>
 #include <abCircle.h>
+#include <stdlib.h>
 
 #define GREEN_LED BIT6
-
 
 AbRect rect10 = {abRectGetBounds, abRectCheck, {10,10}}; /**< 10x10 rectangle */
 AbRArrow rightArrow = {abRArrowGetBounds, abRArrowCheck, 30};
@@ -34,9 +34,9 @@ Layer layer4 = {
 };
   
 
-Layer layer3 = {		/**< Layer with an orange circle */
+Layer layer3 = {		/**< Layer with a violet circle */
   (AbShape *)&circle8,
-  {(screenWidth/2)+10, (screenHeight/2)+5}, /**< bit below & right of center */
+  {(screenWidth/2)+30, (screenHeight/2)+5}, /**< bit below & right of center */
   {0,0}, {0,0},				    /* last & next pos */
   COLOR_VIOLET,
   &layer4,
@@ -78,8 +78,8 @@ typedef struct MovLayer_s {
 } MovLayer;
 
 /* initial value of {0,0} will be overwritten */
-MovLayer ml3 = { &layer3, {1,1}, 0 }; /**< not all layers move */
-MovLayer ml1 = { &layer1, {1,2}, &ml3 }; 
+MovLayer ml3 = { &layer3, {3,2}, 0 }; /**< not all layers move */
+MovLayer ml1 = { &layer1, {-3,2}, &ml3 }; 
 MovLayer ml0 = { &layer0, {0,0}, &ml1 }; 
 
 
@@ -147,11 +147,37 @@ void mlAdvance(MovLayer *ml, Region *fence)
 	  (shapeBoundary.botRight.axes[axis] > fence->botRight.axes[axis]) ) {
 	int velocity = ml->velocity.axes[axis] = -ml->velocity.axes[axis];
 	newPos.axes[axis] += (2*velocity);
+	// P1OUT |= GREEN_LED;
       }	/**< if outside of fence */
     } /**< for axis */
     ml->layer->posNext = newPos;
   } /**< for ml */
 }
+
+
+int collision(const Layer *l1, const Layer *l2) {
+  Region r1;
+  Region r2;
+  Region rU;
+
+  
+  abShapeGetBounds(l1->abShape, &(l1->pos), &r1);
+  abShapeGetBounds(l2->abShape, &(l2->pos), &r2);
+  
+  
+  regionIntersect(&rU, &r1, &r2);
+  
+  int xU1 = rU.topLeft.axes[0];
+  int xU2 = rU.botRight.axes[0];
+  int yU1 = rU.topLeft.axes[1];
+  int yU2 = rU.botRight.axes[1];
+
+  if(xU1 >= xU2 || yU1 >= yU2) {
+    return 1;
+  }
+  return 0;
+}
+ 
 
 
 u_int bgColor = COLOR_BLUE;     /**< The background color */
@@ -166,7 +192,7 @@ Region fieldFence;		/**< fence around playing field  */
 void main()
 {
   P1DIR |= GREEN_LED;		/**< Green led on when CPU on */		
-  P1OUT |= GREEN_LED;
+  P1OUT = 0;
 
   configureClocks();
   lcd_init();
@@ -186,15 +212,22 @@ void main()
   enableWDTInterrupts();      /**< enable periodic interrupt */
   or_sr(0x8);	              /**< GIE (enable interrupts) */
 
-
+  
   for(;;) { 
     while (!redrawScreen) { /**< Pause CPU if screen doesn't need updating */
-      P1OUT &= ~GREEN_LED;    /**< Green led off witHo CPU */
+      //  P1OUT &= ~GREEN_LED;    /**< Green led off witHo CPU */
       or_sr(0x10);	      /**< CPU OFF */
     }
-    P1OUT |= GREEN_LED;       /**< Green led on when CPU on */
+    //  P1OUT |= GREEN_LED;       /**< Green led on when CPU on */
     redrawScreen = 0;
     movLayerDraw(&ml0, &layer0);
+    
+    if(collision(&layer1,&layer0))
+      P1OUT = 0;
+    else {
+      P1OUT |= GREEN_LED;
+      
+    }
   }
 }
 
@@ -202,7 +235,7 @@ void main()
 void wdt_c_handler()
 {
   static short count = 0;
-  P1OUT |= GREEN_LED;		      /**< Green LED on when cpu on */
+  //  P1OUT |= GREEN_LED;		      /**< Green LED on when cpu on */
   count ++;
   if (count == 20) {
     ml0.velocity.axes[0] = ml0.velocity.axes[1] = 0;
@@ -222,5 +255,5 @@ void wdt_c_handler()
     redrawScreen = 1;
     count = 0;
   }
-  P1OUT &= ~GREEN_LED;		    /**< Green LED off when cpu off */
+  // P1OUT &= ~GREEN_LED;		    /**< Green LED off when cpu off */
 }

@@ -80,7 +80,7 @@ typedef struct MovLayer_s {
 /* initial value of {0,0} will be overwritten */
 MovLayer ml3 = { &layer3, {1,1}, 0 }; /**< not all layers move */
 MovLayer ml1 = { &layer1, {1,2}, &ml3 }; 
-MovLayer ml0 = { &layer0, {0,0}, &ml1 }; 
+MovLayer ml0 = { &layer0, {2,1}, &ml1 }; 
 
 
 
@@ -171,8 +171,7 @@ void main()
   configureClocks();
   lcd_init();
   shapeInit();
-  // p2sw_init(1);
-  p2sw_init(BIT0 | BIT1 | BIT2 | BIT3);
+  p2sw_init(1);
 
   shapeInit();
 
@@ -204,22 +203,10 @@ void wdt_c_handler()
   static short count = 0;
   P1OUT |= GREEN_LED;		      /**< Green LED on when cpu on */
   count ++;
-  if (count == 20) {
-    ml0.velocity.axes[0] = ml0.velocity.axes[1] = 0;
-    if (!(p2sw_read() & BIT0)) {
-      ml0.velocity.axes[0] = -3;
-    }
-    if(!(p2sw_read() & BIT1)) {
-      ml0.velocity.axes[1] = -3;
-    }
-    if (!(p2sw_read() & BIT2)) {
-      ml0.velocity.axes[1] = 3;
-    }
-    if(!(p2sw_read() & BIT3)) {
-      ml0.velocity.axes[0] = 3;
-    }
+  if (count == 15) {
     mlAdvance(&ml0, &fieldFence);
-    redrawScreen = 1;
+    if (p2sw_read())
+      redrawScreen = 1;
     count = 0;
   }
   P1OUT &= ~GREEN_LED;		    /**< Green LED off when cpu off */

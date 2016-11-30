@@ -8,11 +8,6 @@ regionUnion(Region *rUnion, const Region *r1, const Region *r2)
   vec2Max(&rUnion->botRight, &r1->botRight, &r2->botRight);
 }
 
-void
-regionIntersect(Region *rIntersect, const Region *r1, const Region *r2) {
-  vec2Max(&rIntersect->topLeft, &r1->topLeft, &r2->topLeft);
-  vec2Min(&rIntersect->botRight, &r1->botRight, &r2->botRight);
-}
 // Trims extent of region to screen bounds
 void regionClipScreen(Region *r)
 {
